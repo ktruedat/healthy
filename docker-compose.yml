@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: healthisis_clickhouse
+    ports:
+      - "8123:8123"  # HTTP interface for REST API
+      - "9000:9000"  # Native interface for client connections
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse  # Persistent data storage
+      # - ./clickhouse-config:/etc/clickhouse-server/config.d  # Optional: mount custom configs
+    environment:
+      - CLICKHOUSE_DB=healthisis  # Database name
+      - CLICKHOUSE_USER=default  # Default user
+      - CLICKHOUSE_PASSWORD=  # Empty password by default
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1  # Enable access management
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  clickhouse_data:
+    driver: local

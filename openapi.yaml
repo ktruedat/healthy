@@ -1,0 +1,778 @@
+openapi: 3.1.0
+info:
+  title: Disease Analytics API
+  description: API for disease tracking, forecasting, and AI-powered querying.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local Development Server
+
+paths:
+  /categories:
+    get:
+      summary: Get all disease categories
+      operationId: getCategories
+      tags:
+        - Categories
+      responses:
+        "200":
+          description: List of disease categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+    post:
+      summary: Create a new disease category
+      operationId: createCategory
+      tags:
+        - Categories
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+
+  /categories/{category_id}:
+    patch:
+      summary: Update a category
+      operationId: updateCategory
+      tags:
+        - Categories
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "200":
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+    delete:
+      summary: Delete a category
+      operationId: deleteCategory
+      tags:
+        - Categories
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Category deleted successfully
+
+  /diseases:
+    get:
+      summary: List all diseases with filtering
+      operationId: listDiseases
+      tags:
+        - Diseases
+      parameters:
+        - name: startYear
+          in: query
+          schema:
+            type: integer
+          description: Filter by start year
+        - name: endYear
+          in: query
+          schema:
+            type: integer
+          description: Filter by end year
+        - name: quarters
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+          explode: true
+          description: Filter by quarters
+        - name: regions
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: true
+          description: Filter by regions
+        - name: categories
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: true
+          description: Filter by categories
+        - name: diseaseIds
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: true
+          description: Filter by disease IDs
+        - name: minCases
+          in: query
+          schema:
+            type: integer
+          description: Minimum number of cases
+        - name: maxCases
+          in: query
+          schema:
+            type: integer
+          description: Maximum number of cases
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+          description: Field to sort by
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: Sort order
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          description: Number of results to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+          description: Offset for pagination
+      responses:
+        "200":
+          description: List of diseases matching filters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Disease"
+    post:
+      summary: Create a new disease
+      operationId: createDisease
+      tags:
+        - Diseases
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiseaseInput"
+      responses:
+        "201":
+          description: Disease created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Disease"
+
+  /diseases/{disease_id}:
+    patch:
+      summary: Update a disease
+      operationId: updateDisease
+      tags:
+        - Diseases
+      parameters:
+        - name: disease_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiseaseInput"
+      responses:
+        "200":
+          description: Disease updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Disease"
+    delete:
+      summary: Delete a disease
+      operationId: deleteDisease
+      tags:
+        - Diseases
+      parameters:
+        - name: disease_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Disease deleted successfully
+
+  /diseases/{disease_id}/data:
+    post:
+      summary: Add new disease data
+      operationId: addDiseaseData
+      tags:
+        - Diseases
+      parameters:
+        - name: disease_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiseaseDataInput"
+      responses:
+        "201":
+          description: Disease data added successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiseaseData"
+
+  /dashboard/summary:
+    get:
+      summary: Get dashboard summary statistics
+      operationId: getDashboardSummary
+      tags:
+        - Dashboard
+      parameters:
+        - name: diseaseID
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional ID of a specific disease to get summary for
+      responses:
+        "200":
+          description: Dashboard summary data (general or disease-specific)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/DashboardSummary"
+                  - type: object
+                    properties:
+                      diseaseID:
+                        type: string
+                      summary:
+                        $ref: "#/components/schemas/DashboardSummary"
+                
+  /dashboard/trends:
+    get:
+      summary: Get disease trends over time
+      operationId: getDashboardTrends
+      tags:
+        - Dashboard
+      responses:
+        "200":
+          description: Disease trends data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiseaseTrends"
+                
+  /dashboard/map:
+    get:
+      summary: Get geographic distribution of diseases
+      operationId: getDashboardMap
+      tags:
+        - Dashboard
+      responses:
+        "200":
+          description: Geographic distribution data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MapData"
+  
+  /analytics/forecast:
+    post:
+      summary: Generate disease forecast
+      operationId: generateForecast
+      tags:
+        - Analytics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForecastRequest"
+      responses:
+        "200":
+          description: Disease forecast data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForecastResponse"
+  
+  /analytics/query:
+    post:
+      summary: Process natural language analytics query
+      operationId: processAnalyticsQuery
+      tags:
+        - Analytics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiseaseQuery"
+      responses:
+        "200":
+          description: Query result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryResult"
+
+  /analytics/correlation:
+    post:
+      summary: Analyze correlation between diseases or environmental factors
+      operationId: analyzeCorrelation
+      tags:
+        - Analytics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CorrelationRequest"
+      responses:
+        "200":
+          description: Correlation analysis results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CorrelationResult"
+
+  /categories/{category_id}/diseases:
+    get:
+      summary: Get diseases by category
+      operationId: getDiseasesByCategory
+      tags:
+        - Diseases
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of diseases in the category
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Disease"
+
+  /diseases/{disease_id}/predict:
+    get:
+      summary: Predict future disease cases
+      operationId: predictDiseaseCases
+      tags:
+        - Predictions
+      parameters:
+        - name: disease_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Predicted cases for the given year
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiseasePrediction"
+
+  /query:
+    post:
+      summary: AI-powered disease data query
+      operationId: aiQuery
+      tags:
+        - AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question:
+                  type: string
+                  example: "What was the peak flu season in 2023?"
+      responses:
+        "200":
+          description: AI-powered response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer:
+                    type: string
+                    example: "The highest flu cases in 2023 occurred in Q1, with 12,000 cases."
+
+components:
+  schemas:
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    Disease:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    DiseaseData:
+      type: object
+      properties:
+        year:
+          type: integer
+        quarter:
+          type: integer
+        cases:
+          type: integer
+        prevalence:
+          type: number
+          format: float
+        incidence:
+          type: number
+          format: float
+
+    DiseaseComparison:
+      type: object
+      properties:
+        disease:
+          type: string
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              year:
+                type: integer
+              cases:
+                type: integer
+
+    DiseasePrediction:
+      type: object
+      properties:
+        year:
+          type: integer
+        q1_predicted_cases:
+          type: integer
+        q2_predicted_cases:
+          type: integer
+        q3_predicted_cases:
+          type: integer
+        q4_predicted_cases:
+          type: integer
+
+    CategoryInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+
+    DiseaseInput:
+      type: object
+      required:
+        - name
+        - category_id
+      properties:
+        name:
+          type: string
+        category_id:
+          type: integer
+        description:
+          type: string
+
+    DiseaseDataInput:
+      type: object
+      required:
+        - year
+        - quarter
+        - cases
+      properties:
+        year:
+          type: integer
+        quarter:
+          type: integer
+        cases:
+          type: integer
+        notes:
+          type: string
+
+    Alert:
+      type: object
+      properties:
+        id:
+          type: integer
+        disease_id:
+          type: integer
+        severity:
+          type: string
+          enum: [low, medium, high]
+        message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    AlertInput:
+      type: object
+      required:
+        - disease_id
+        - severity
+        - message
+      properties:
+        disease_id:
+          type: integer
+        severity:
+          type: string
+          enum: [low, medium, high]
+        message:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+
+    CorrelationRequest:
+      type: object
+      required:
+        - factor1
+        - factor2
+        - timeframe
+      properties:
+        factor1:
+          type: string
+        factor2:
+          type: string
+        timeframe:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date
+            end_date:
+              type: string
+              format: date
+
+    CorrelationResult:
+      type: object
+      properties:
+        correlation_coefficient:
+          type: number
+          format: float
+        p_value:
+          type: number
+          format: float
+        confidence_interval:
+          type: object
+          properties:
+            lower:
+              type: number
+              format: float
+            upper:
+              type: number
+              format: float
+        visualization_data:
+          type: object
+          additionalProperties: true
+
+    DashboardSummary:
+      type: object
+      properties:
+        total_cases:
+          type: integer
+        total_diseases:
+          type: integer
+        total_regions:
+          type: integer
+        top_diseases:
+          type: array
+          items:
+            type: object
+            properties:
+              disease_id:
+                type: integer
+              name:
+                type: string
+              cases:
+                type: integer
+        recent_trends:
+          type: array
+          items:
+            type: object
+            properties:
+              disease_id:
+                type: integer
+              name:
+                type: string
+              trend_percentage:
+                type: number
+                format: float
+              direction:
+                type: string
+                enum: [up, down, stable]
+
+    DiseaseTrends:
+      type: object
+      properties:
+        time_series:
+          type: array
+          items:
+            type: object
+            properties:
+              year:
+                type: integer
+              quarter:
+                type: integer
+              diseases:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    disease_id:
+                      type: integer
+                    name:
+                      type: string
+                    cases:
+                      type: integer
+
+    MapData:
+      type: object
+      properties:
+        regions:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              cases:
+                type: integer
+              lat:
+                type: number
+                format: float
+              lon:
+                type: number
+                format: float
+              diseases:
+                type: array
+                items:
+                  type: string
+
+    ForecastRequest:
+      type: object
+      required:
+        - disease_id
+        - year
+      properties:
+        disease_id:
+          type: integer
+        year:
+          type: integer
+        quarters:
+          type: array
+          items:
+            type: integer
+
+    ForecastResponse:
+      type: object
+      properties:
+        disease_id:
+          type: integer
+        year:
+          type: integer
+        forecast:
+          type: array
+          items:
+            type: integer
+        confidence_intervals:
+          type: array
+          items:
+            type: object
+            properties:
+              lower:
+                type: integer
+              upper:
+                type: integer
+
+    DiseaseQuery:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          example: "Show me trends for influenza in 2023"
+        filters:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date
+            end_date:
+              type: string
+              format: date
+
+    QueryResult:
+      type: object
+      properties:
+        result_type:
+          type: string
+          enum: [time_series, comparison, statistics, correlation]
+        data:
+          type: object
+          additionalProperties: true
+        explanation:
+          type: string

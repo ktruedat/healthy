@@ -46,11 +46,13 @@ type DiseaseStats struct {
 
 // DiseaseTimePoint represents a single data point in a time series
 type DiseaseTimePoint struct {
-	Year    int    `json:"year"`
-	Quarter int    `json:"quarter"`
-	Name    string `json:"name"`
-	// Change uint32 to uint64 to match ClickHouse UInt64 type
-	Cases uint64 `json:"cases"`
+	Year          int     `json:"year"`
+	Quarter       int     `json:"quarter"`
+	Name          string  `json:"name"`
+	Cases         uint64  `json:"cases"`
+	IncidenceRate float64 `json:"incidenceRate"`
+	MortalityRate float64 `json:"mortalityRate"`
+	RecoveryRate  float64 `json:"recoveryRate"`
 }
 
 // TimeSeries represents a collection of disease data points over time

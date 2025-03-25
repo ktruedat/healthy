@@ -165,13 +165,28 @@ paths:
           description: Offset for pagination
       responses:
         "200":
-          description: List of diseases matching filters
+          description: List of diseases with pagination info
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Disease"
+                type: object
+                properties:
+                  diseases:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Disease"
+                  totalCount:
+                    type: integer
+                    description: Number of items in current page
+                  page:
+                    type: integer
+                    description: Current page number
+                  limit:
+                    type: integer
+                    description: Number of items per page
+                  hasMore:
+                    type: boolean
+                    description: Indicates if there are more records available
     post:
       summary: Create a new disease
       operationId: createDisease
@@ -667,7 +682,7 @@ components:
     DiseaseTrends:
       type: object
       properties:
-        time_series:
+        points:
           type: array
           items:
             type: object
@@ -676,17 +691,22 @@ components:
                 type: integer
               quarter:
                 type: integer
-              diseases:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    disease_id:
-                      type: integer
-                    name:
-                      type: string
-                    cases:
-                      type: integer
+              name:
+                type: string
+              cases:
+                type: integer
+              incidenceRate:
+                type: number
+                format: float
+                description: Disease incidence rate per 100,000 population
+              mortalityRate:
+                type: number
+                format: float
+                description: Disease mortality rate (percentage)
+              recoveryRate:
+                type: number
+                format: float
+                description: Disease recovery rate (percentage)
 
     MapData:
       type: object

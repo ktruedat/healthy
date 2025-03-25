@@ -302,13 +302,18 @@ func (s *DiseaseService) GetDiseaseStats(ctx context.Context, filter models.Dise
 // GetTimeSeries retrieves time series data for diseases
 func (s *DiseaseService) GetTimeSeries(ctx context.Context, filter models.DiseaseFilter) (*models.TimeSeries, error) {
 	query := `
-		SELECT 
-			year, 
-			quarter,
-			name,
-			SUM(cases) as cases
-		FROM diseases
-		WHERE 1=1
+		WITH 
+			sumCases AS (
+				SELECT 
+					year,
+					quarter,
+					name,
+					SUM(cases) as total_cases,
+					SUM(recoveries) as total_recoveries,
+					AVG(incidence_rate) as incidence_rate,
+					AVG(mortality_rate) as mortality_rate
+				FROM diseases
+				WHERE 1=1
 	`
 
 	var args []interface{}
@@ -324,10 +329,27 @@ func (s *DiseaseService) GetTimeSeries(ctx context.Context, filter models.Diseas
 		args = append(args, uint16(*filter.EndYear))
 	}
 
-	query += " GROUP BY year, quarter, name ORDER BY year, quarter, name"
+	query += ` 
+				GROUP BY year, quarter, name
+			)
+		SELECT
+			year,
+			quarter,
+			name,
+			total_cases as cases,
+			incidence_rate,
+			mortality_rate,
+			CASE 
+				WHEN total_cases > 0 THEN (total_recoveries / total_cases) * 100
+				ELSE 0
+			END as recovery_rate
+		FROM sumCases
+		ORDER BY year, quarter, name
+	`
 
 	rows, err := s.db.GetConn().Query(ctx, query, args...)
 	if err != nil {
+		fmt.Println("Error querying time series:", err)
 		// Return stub data if query fails
 		points := []models.DiseaseTimePoint{
 			{Year: 2020, Quarter: 1, Name: "Influenza", Cases: 15000},
@@ -351,16 +373,20 @@ func (s *DiseaseService) GetTimeSeries(ctx context.Context, filter models.Diseas
 		var quarter uint8
 		var name string
 		var cases uint64
+		var incidenceRate, mortalityRate, recoveryRate float64
 
-		if err := rows.Scan(&year, &quarter, &name, &cases); err != nil {
+		if err := rows.Scan(&year, &quarter, &name, &cases, &incidenceRate, &mortalityRate, &recoveryRate); err != nil {
 			return nil, fmt.Errorf("error scanning time series row: %w", err)
 		}
 
 		point := models.DiseaseTimePoint{
-			Year:    int(year),
-			Quarter: int(quarter),
-			Name:    name,
-			Cases:   cases,
+			Year:          int(year),
+			Quarter:       int(quarter),
+			Name:          name,
+			Cases:         cases,
+			IncidenceRate: incidenceRate,
+			MortalityRate: mortalityRate,
+			RecoveryRate:  recoveryRate,
 		}
 		points = append(points, point)
 	}

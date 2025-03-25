@@ -25,13 +25,39 @@ func New(service *services.DiseaseService) *Handler {
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	filter := parseFilterFromQuery(r)
 
+	// Store the original limit for later use
+	originalLimit := filter.Limit
+	if originalLimit <= 0 {
+		originalLimit = 10 // Default limit if not provided
+	}
+
+	// Increase the limit by 1 to check if there are more records
+	filter.Limit = originalLimit + 1
+
 	diseases, err := h.service.ListDiseases(r.Context(), filter)
 	if err != nil {
 		common.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	common.JSONResponse(w, http.StatusOK, diseases)
+	// Check if we got more results than requested
+	hasMore := len(diseases) > originalLimit
+
+	// If we have more, remove the extra record before returning
+	if hasMore {
+		diseases = diseases[:originalLimit]
+	}
+
+	// Create a response with both the diseases and pagination info
+	response := map[string]any{
+		"diseases":   diseases,
+		"totalCount": len(diseases), // This is just the count of current page items
+		"page":       (filter.Offset / originalLimit) + 1,
+		"limit":      originalLimit,
+		"hasMore":    hasMore,
+	}
+
+	common.JSONResponse(w, http.StatusOK, response)
 }
 
 // Get handles GET /diseases/{id}

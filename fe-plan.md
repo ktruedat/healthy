@@ -75,8 +75,6 @@ frontend/
 
 #### Layout Setup
 - [✅] Create root layout with responsive sidebar navigation
-- [ ] Design page container with breadcrumb navigation # not really needed
-- [ ] Set up responsive breakpoints for mobile/tablet/desktop # not really needed
 
 #### API Services
 - [✅] Set up API client with Axios for HTTP requests
@@ -91,20 +89,18 @@ frontend/
 #### Basic Components
 - [✅] Implement stats cards for key metrics display
 - [✅] Create basic chart components (line, bar, pie)
-- [ ] Build simple data table component
-- [ ] Develop form components for filters
+- [✅ ] Build simple data table component
 
 ### Phase 2: Dashboard Views 
 
 #### Summary Dashboard
 - [ ] Create main dashboard layout with grid of metrics
-- [ ] Implement KPI cards showing:
-  - [ ] Total cases
-  - [ ] Deaths
-  - [ ] Recoveries
-  - [ ] Active cases
-- [ ] Build disease prevalence chart (by region)
-- [ ] Develop time series chart for trends
+- [✅] Implement KPI cards showing:
+  - [✅] Total cases
+  - [✅] Deaths
+  - [✅] Recoveries
+  - [✅] Active cases
+- [✅] Develop time series chart for trends
 
 #### Trends Visualization
 - [ ] Create interactive line charts for disease trends
@@ -112,16 +108,10 @@ frontend/
 - [ ] Add comparison functionality between diseases
 - [ ] Build export functionality for chart data
 
-#### Geographic Visualization  
-- [ ] Integrate map component for geographic data
-- [ ] Implement choropleth coloring based on disease prevalence
-- [ ] Create region tooltips with detailed information
-- [ ] Add filtering by disease type
-
 ### Phase 3: Disease Management 
 
 #### Disease Listing
-- [ ] Create data table with sorting and pagination
+- [✅] Create data table with sorting and pagination
 - [ ] Implement search and filter functionality
 - [ ] Add quick actions (view details, add data)
 - [ ] Create "add new disease" form

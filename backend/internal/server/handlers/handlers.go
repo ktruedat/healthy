@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/ktruedat/healthisis/backend/internal/database"
+	"github.com/ktruedat/healthisis/backend/internal/pkg/log"
 	"github.com/ktruedat/healthisis/backend/internal/server/handlers/ai"
 	"github.com/ktruedat/healthisis/backend/internal/server/handlers/analytics"
 	"github.com/ktruedat/healthisis/backend/internal/server/handlers/category"
@@ -19,10 +20,12 @@ type Handlers struct {
 	AI        *ai.Handler
 	Dashboard *dashboard.Handler
 	System    *system.Handler
+	logger    log.Logger
 }
 
 // New creates all handlers
-func New(db *database.DB) *Handlers {
+func New(db *database.DB, logger log.Logger) *Handlers {
+	logger.Info("Setting up server handlers...")
 	// Initialize services
 	diseaseService := services.NewDiseaseService(db)
 	categoryService := services.NewCategoryService(db)
@@ -37,5 +40,6 @@ func New(db *database.DB) *Handlers {
 		AI:        ai.New(aiService),
 		Dashboard: dashboard.New(diseaseService),
 		System:    system.New(),
+		logger:    logger,
 	}
 }

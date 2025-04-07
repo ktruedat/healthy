@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,6 +10,8 @@ import (
 
 	"github.com/ktruedat/healthisis/backend/internal/config"
 	"github.com/ktruedat/healthisis/backend/internal/database"
+	"github.com/ktruedat/healthisis/backend/internal/pkg/common"
+	"github.com/ktruedat/healthisis/backend/internal/pkg/log"
 	"github.com/ktruedat/healthisis/backend/internal/server"
 )
 
@@ -19,6 +20,7 @@ type App struct {
 	config *config.Config
 	server *server.Server
 	db     *database.DB
+	logger log.Logger
 }
 
 // New creates a new application instance
@@ -29,6 +31,8 @@ func New(configPath string) (*App, error) {
 		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}
 
+	logger := log.NewLogger(common.DevelopmentEnvironment)
+
 	// Initialize database
 	db, err := database.NewClickHouseDB(cfg)
 	if err != nil {
@@ -36,12 +40,13 @@ func New(configPath string) (*App, error) {
 	}
 
 	// Initialize server
-	srv := server.New(cfg, db)
+	srv := server.New(cfg, db, logger)
 
 	return &App{
 		config: cfg,
 		server: srv,
 		db:     db,
+		logger: logger,
 	}, nil
 }
 
@@ -58,7 +63,7 @@ func (a *App) Run() error {
 	// Start server in a goroutine
 	serverErrors := make(chan error, 1)
 	go func() {
-		log.Printf("Starting server on port %d in %s mode", a.config.Server.Port, a.config.Server.Env)
+		a.logger.Info("Starting server...", "port", a.config.Server.Port, "env", a.config.Server.Env)
 		serverErrors <- a.server.Run()
 	}()
 
@@ -67,7 +72,7 @@ func (a *App) Run() error {
 	case err := <-serverErrors:
 		return fmt.Errorf("server error: %w", err)
 	case sig := <-sigCh:
-		log.Printf("Received signal: %v", sig)
+		a.logger.Info("Received signal. Shutting down...", "signal", sig)
 
 		// Create a timeout for graceful shutdown
 		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 10*time.Second)
